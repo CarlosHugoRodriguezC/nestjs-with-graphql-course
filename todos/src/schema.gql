@@ -1,0 +1,49 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Todo {
+  id: Int!
+  description: String!
+  done: Boolean!
+}
+
+type AggregationsType {
+  total: Int!
+  pending: Int!
+  completed: Int!
+  totalTodosCompleted: Int! @deprecated(reason: "Most use completed instead")
+}
+
+type Query {
+  """Hola Mundo es lo que regresa"""
+  hello: String!
+
+  """Return a random number"""
+  random: Float!
+
+  """Return a random number from zero to"""
+  randomFromZeroTo(to: Int): Int!
+  todos(status: Boolean): [Todo!]!
+  todo(id: Int!): Todo!
+  totalTodos: Int!
+  completedTodos: Int!
+  pendingTodos: Int!
+  aggregations: AggregationsType!
+}
+
+type Mutation {
+  createTodo(createTodoInput: CreateTodoInput!): Todo!
+  updateTodo(id: Int!, updateTodoInput: UpdateTodoInput!): Todo!
+  removeTodo(id: Int!): Boolean!
+}
+
+input CreateTodoInput {
+  description: String!
+}
+
+input UpdateTodoInput {
+  id: Int!
+  description: String
+  done: Boolean
+}
