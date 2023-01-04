@@ -27,4 +27,5 @@ export class User {
   @Column({ type: 'boolean', default: true })
   @Field(() => Boolean)
   isActive: boolean;
+  
 }
