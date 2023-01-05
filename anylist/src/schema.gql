@@ -27,6 +27,7 @@ type Query {
   item(id: ID!): Item!
   users: [User!]!
   user(id: Int!): User!
+  revalidate: AuthResponse!
 }
 
 type Mutation {

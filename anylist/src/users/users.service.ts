@@ -5,6 +5,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SignUpInput } from 'src/auth/dto/inputs/sign-up.input';
@@ -43,7 +44,17 @@ export class UsersService {
     try {
       return await this.userRepository.findOneByOrFail({ email });
     } catch (error) {
-      this.handleDBErrors(error);
+      throw new NotFoundException(`${email} not found`);
+      // this.handleDBErrors({ code: 'error-001', detail: `${email} not found` });
+    }
+  }
+
+  async findOneById(id: string): Promise<User> {
+    try {
+      return await this.userRepository.findOneByOrFail({ id });
+    } catch (error) {
+      throw new NotFoundException(`user with ${id} not found`);
+      // this.handleDBErrors({ code: 'error-001', detail: `${email} not found` });
     }
   }
 
@@ -56,6 +67,9 @@ export class UsersService {
   private handleDBErrors(error: any): never {
     if (error.code === '23505')
       throw new BadRequestException(error.detail.replace('key', ''));
+
+    // if (error.code === 'error-001')
+    //   throw new BadRequestException(error.detail);
 
     this.logger.error(error);
 
