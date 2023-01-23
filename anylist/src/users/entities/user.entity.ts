@@ -8,6 +8,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { List } from '../../lists/entities/list.entity';
 
 @ObjectType()
 @Entity({ name: 'users' })
@@ -49,4 +50,7 @@ export class User {
   @OneToMany(() => Item, (item) => item.user, { lazy: true })
   // @Field(() => [Item])
   items: Item[];
+
+  @OneToMany(() => List, (list) => list.user, { lazy: true })
+  lists: List[];
 }
