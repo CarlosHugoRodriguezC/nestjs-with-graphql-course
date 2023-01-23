@@ -13,6 +13,7 @@ import { Repository } from 'typeorm';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { User } from './entities/user.entity';
+import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
 
 @Injectable()
 export class UsersService {
@@ -36,8 +37,19 @@ export class UsersService {
     }
   }
 
-  async findAll(): Promise<User[]> {
-    return [];
+  async findAll(roles: ValidRoles[]): Promise<User[]> {
+    if (roles.length === 0)
+      return await this.userRepository.find({
+        // relations: { Not neccesary because we have configured lazy in the relation
+        //   lastUpdateBy: true,
+        // },
+      });
+
+    return this.userRepository
+      .createQueryBuilder()
+      .andWhere('ARRAY[roles] && ARRAY[:...roles]')
+      .setParameter('roles', roles)
+      .getMany();
   }
 
   async findOneByEmail(email: string): Promise<User> {
@@ -58,10 +70,27 @@ export class UsersService {
     }
   }
 
-  async update() {}
+  async update(
+    id: string,
+    updateUserInput: UpdateUserInput,
+    updatedBy: User,
+  ): Promise<User> {
+    try {
+      const user = await this.userRepository.preload({...updateUserInput, id });
 
-  block(id: number): Promise<User> {
-    throw new Error('Blokc method not implemented');
+      user.lastUpdateBy = updatedBy;
+
+      return await this.userRepository.save(user);
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
+  }
+
+  async block(id: string, adminUser: User): Promise<User> {
+    const userToBlock = await this.findOneById(id);
+    userToBlock.isActive = false;
+    userToBlock.lastUpdateBy = adminUser;
+    return await this.userRepository.save(userToBlock);
   }
 
   private handleDBErrors(error: any): never {
