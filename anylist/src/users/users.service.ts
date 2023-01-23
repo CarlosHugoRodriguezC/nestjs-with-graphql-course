@@ -14,6 +14,7 @@ import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { User } from './entities/user.entity';
 import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
+import { PaginationArgs, SearchArgs } from '../common/dto/args';
 
 @Injectable()
 export class UsersService {
@@ -37,19 +38,28 @@ export class UsersService {
     }
   }
 
-  async findAll(roles: ValidRoles[]): Promise<User[]> {
-    if (roles.length === 0)
-      return await this.userRepository.find({
-        // relations: { Not neccesary because we have configured lazy in the relation
-        //   lastUpdateBy: true,
-        // },
+  async findAll(
+    roles: ValidRoles[],
+    paginationArgs: PaginationArgs,
+    searchArgs: SearchArgs,
+  ): Promise<User[]> {
+    const { limit, offset } = paginationArgs;
+    const { search } = searchArgs;
+
+    const queryBuilder = this.userRepository
+      .createQueryBuilder()
+      .take(limit)
+      .skip(offset);
+
+    if (roles.length > 0)
+      queryBuilder.andWhere('ARRAY[roles] && ARRAY[:...roles]', { roles });
+
+    if (search)
+      queryBuilder.andWhere('LOWER("fullName") LIKE :name', {
+        name: `%${search.toLowerCase()}%`,
       });
 
-    return this.userRepository
-      .createQueryBuilder()
-      .andWhere('ARRAY[roles] && ARRAY[:...roles]')
-      .setParameter('roles', roles)
-      .getMany();
+    return queryBuilder.getMany();
   }
 
   async findOneByEmail(email: string): Promise<User> {
@@ -76,7 +86,10 @@ export class UsersService {
     updatedBy: User,
   ): Promise<User> {
     try {
-      const user = await this.userRepository.preload({...updateUserInput, id });
+      const user = await this.userRepository.preload({
+        ...updateUserInput,
+        id,
+      });
 
       user.lastUpdateBy = updatedBy;
 
