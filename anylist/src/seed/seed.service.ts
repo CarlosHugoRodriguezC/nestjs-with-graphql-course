@@ -6,9 +6,15 @@ import { Repository } from 'typeorm';
 
 import { Item } from 'src/items/entities/item.entity';
 import { User } from 'src/users/entities/user.entity';
+import { List } from '../lists/entities/list.entity';
+
 import { SEED_ITEMS, SEED_USERS } from './data/seed-data';
+
 import { UsersService } from 'src/users/users.service';
 import { ItemsService } from 'src/items/items.service';
+import { ListsService } from '../lists/lists.service';
+import { ListItemService } from '../list-item/list-item.service';
+import { ListItem } from '../list-item/entities/list-item.entity';
 
 @Injectable()
 export class SeedService {
@@ -17,8 +23,14 @@ export class SeedService {
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
     private readonly itemsService: ItemsService,
+    private readonly listsService: ListsService,
+    private readonly listItemsService: ListItemService,
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     @InjectRepository(Item) private readonly itemsRepository: Repository<Item>,
+    @InjectRepository(ListItem)
+    private readonly listsItemsRepository: Repository<ListItem>,
+    @InjectRepository(List)
+    private readonly listsRepository: Repository<List>,
   ) {
     this.isProd = configService.get('STATE') === 'prod';
   }
@@ -37,12 +49,27 @@ export class SeedService {
   }
 
   async deleteDatabase() {
+    // TODO delete listItems
+    await this.listsItemsRepository
+      .createQueryBuilder()
+      .delete()
+      .where({})
+      .execute();
+
+    // TODO delete lists
+    await this.listsRepository
+      .createQueryBuilder()
+      .delete()
+      .where({})
+      .execute();
+
     // TODO delete items
     await this.itemsRepository
       .createQueryBuilder()
       .delete()
       .where({})
       .execute();
+
     // TODO delete users
     await this.usersRepository
       .createQueryBuilder()
