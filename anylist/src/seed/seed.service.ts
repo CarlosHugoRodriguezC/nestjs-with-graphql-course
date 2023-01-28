@@ -8,7 +8,7 @@ import { Item } from 'src/items/entities/item.entity';
 import { User } from 'src/users/entities/user.entity';
 import { List } from '../lists/entities/list.entity';
 
-import { SEED_ITEMS, SEED_USERS } from './data/seed-data';
+import { SEED_ITEMS, SEED_LISTS, SEED_USERS } from './data/seed-data';
 
 import { UsersService } from 'src/users/users.service';
 import { ItemsService } from 'src/items/items.service';
@@ -39,38 +39,49 @@ export class SeedService {
     if (this.isProd)
       throw new UnauthorizedException('We cannot run Seed on production');
 
-    // TODO: Clear database
+    // TODO: Clear database ✔️
     await this.deleteDatabase();
-    // TODO: Create Users
+    // TODO: Create Users ✔️
     const user = await this.loadUsers();
-    // TODO: Create Items
+    // TODO: Create Items ✔️
     await this.loadItems(user);
+
+    // TODO: Create Lists
+    const list = await this.loadLists(user);
+    // TODO: Create List Items
+    const items = await this.itemsService.findAll(
+      user,
+      { limit: 15, offset: 0 },
+      {},
+    );
+    await this.loadListItems(list, items);
+
     return true;
   }
 
   async deleteDatabase() {
-    // TODO delete listItems
+    // TODO: delete listItems ✔️
     await this.listsItemsRepository
       .createQueryBuilder()
       .delete()
       .where({})
       .execute();
 
-    // TODO delete lists
+    // TODO: delete lists ✔️
     await this.listsRepository
       .createQueryBuilder()
       .delete()
       .where({})
       .execute();
 
-    // TODO delete items
+    // TODO: delete items ✔️
     await this.itemsRepository
       .createQueryBuilder()
       .delete()
       .where({})
       .execute();
 
-    // TODO delete users
+    // TODO: delete users ✔️
     await this.usersRepository
       .createQueryBuilder()
       .delete()
@@ -100,5 +111,28 @@ export class SeedService {
     }
 
     await Promise.all(itemPromises);
+  }
+
+  async loadLists(user: User): Promise<List> {
+    const lists = [];
+
+    for (const list of SEED_LISTS) {
+      lists.push(await this.listsService.create(list, user));
+    }
+
+    return lists[0];
+  }
+
+  async loadListItems(list: List, items: Item[]): Promise<void> {
+    const createItemsPromises: Promise<ListItem>[] = items.map((item, index) =>
+      this.listItemsService.create({
+        itemId: item.id,
+        listId: list.id,
+        quantity: 1 * index,
+        completed: false,
+      }),
+    );
+
+    await Promise.all(createItemsPromises);
   }
 }

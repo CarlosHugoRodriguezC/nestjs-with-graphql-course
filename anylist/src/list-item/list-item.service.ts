@@ -26,7 +26,7 @@ export class ListItemService {
 
     await this.listItemsRepository.save(newListItem);
 
-    return newListItem;
+    return this.findOne(newListItem.id);
   }
 
   async findAll(
